@@ -16,6 +16,11 @@ const client = new Client({
     partials: [Partials.Channel, Partials.Message, Partials.User]
 });
 
+// --- DIAGNOSTIC LISTENERS ---
+client.on('error', (err) => console.error('[Discord Error]', err));
+client.on('warn', (info) => console.warn('[Discord Warning]', info));
+process.on('unhandledRejection', (reason) => console.error('[Unhandled Rejection]', reason));
+
 client.commands = new Collection();
 
 // 1. Load Commands
@@ -45,24 +50,27 @@ for (const file of eventFiles) {
 // Start Systems
 (async () => {
     try {
-        // Connect Database
+        console.log("[System] Initializing Memory (Database)...");
         await connectDB();
 
-        // Start Web Server (For Render Port Binding)
+        console.log("[System] Opening Mansion Doors (Web Server)...");
         require('./src/utils/server')(client);
 
-        // Login
         const token = process.env.DISCORD_TOKEN?.trim();
         if (!token) {
-            console.error("[CRITICAL] DISCORD_TOKEN is missing!");
+            console.error("[CRITICAL] DISCORD_TOKEN is missing in Render Environment!");
             return;
         }
 
-        console.log("[System] Connecting to Discord...");
-        await client.login(token);
-        console.log("[System] Login signal sent.");
+        console.log("[System] Requesting Discord Audience...");
+        // Non-blocking login to see if logs proceed
+        client.login(token).then(() => {
+            console.log("[System] Discord Login successful.");
+        }).catch(err => {
+            console.error("[CRITICAL] Discord Login Failed:", err.message);
+        });
 
     } catch (err) {
-        console.error('[CRITICAL ERROR] Startup failed:', err);
+        console.error('[CRITICAL ERROR] Startup sequence broken:', err);
     }
 })();
