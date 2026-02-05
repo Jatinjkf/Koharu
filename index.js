@@ -1,3 +1,7 @@
+// FORCE IPv4 FOR CLOUD STABILITY
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first');
+
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
 const fs = require('fs');
@@ -50,27 +54,23 @@ for (const file of eventFiles) {
 // Start Systems
 (async () => {
     try {
-        console.log("[System] Initializing Memory (Database)...");
+        console.log("[System] Initializing Memory...");
         await connectDB();
 
-        console.log("[System] Opening Mansion Doors (Web Server)...");
+        console.log("[System] Opening Mansion Doors...");
         require('./src/utils/server')(client);
 
         const token = process.env.DISCORD_TOKEN?.trim();
         if (!token) {
-            console.error("[CRITICAL] DISCORD_TOKEN is missing in Render Environment!");
+            console.error("[CRITICAL] DISCORD_TOKEN is missing!");
             return;
         }
 
-        console.log("[System] Requesting Discord Audience...");
-        // Non-blocking login to see if logs proceed
-        client.login(token).then(() => {
-            console.log("[System] Discord Login successful.");
-        }).catch(err => {
-            console.error("[CRITICAL] Discord Login Failed:", err.message);
-        });
+        console.log("[System] Sending request to Discord Headquarters...");
+        await client.login(token);
+        console.log("[System] Koharu has been granted entry!");
 
     } catch (err) {
-        console.error('[CRITICAL ERROR] Startup sequence broken:', err);
+        console.error('[CRITICAL ERROR] Startup failure:', err.message);
     }
 })();
