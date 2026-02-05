@@ -1,0 +1,26 @@
+{
+  "name": "koharu-study-bot",
+  "version": "1.0.0",
+  "description": "A personal study maid bot for spaced repetition learning.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "study",
+    "spaced-repetition"
+  ],
+  "author": "Master Jatin",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.1.3",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongodb-memory-server": "^9.1.6",
+    "mongoose": "^8.0.3",
+    "node-cron": "^3.0.3"
+  }
+}
