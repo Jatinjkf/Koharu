@@ -30,9 +30,9 @@ async function connectDB() {
 
         console.log("[Database] Connecting to Mongoose...");
         
-        // Wait for connection with explicit options
         await mongoose.connect(uri, {
-            serverSelectionTimeoutMS: 5000, // Fail fast if can't find server
+            serverSelectionTimeoutMS: 5000,
+            family: 4 // Force IPv4 for Render compatibility
         });
 
         console.log("[Database] Koharu has successfully connected to her memory.");
