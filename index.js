@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./src/utils/db');
@@ -12,7 +12,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages
-    ]
+    ],
+    partials: [Partials.Channel, Partials.Message, Partials.User]
 });
 
 client.commands = new Collection();
