@@ -1,4 +1,4 @@
-// FORCE IPv4 FOR CLOUD STABILITY
+// PRODUCTION PROTOCOL: FORCED IPv4
 const dns = require('node:dns');
 dns.setDefaultResultOrder('ipv4first');
 
@@ -7,8 +7,6 @@ const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js'
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./src/utils/db');
-
-console.log("[System] Koharu is waking up...");
 
 const client = new Client({
     intents: [
@@ -19,11 +17,6 @@ const client = new Client({
     ],
     partials: [Partials.Channel, Partials.Message, Partials.User]
 });
-
-// --- DIAGNOSTIC LISTENERS ---
-client.on('error', (err) => console.error('[Discord Error]', err));
-client.on('warn', (info) => console.warn('[Discord Warning]', info));
-process.on('unhandledRejection', (reason) => console.error('[Unhandled Rejection]', reason));
 
 client.commands = new Collection();
 
@@ -54,10 +47,10 @@ for (const file of eventFiles) {
 // Start Systems
 (async () => {
     try {
-        console.log("[System] Initializing Memory...");
+        console.log("[System] Connecting to Memory...");
         await connectDB();
 
-        console.log("[System] Opening Mansion Doors...");
+        console.log("[System] Starting WebUI Port Binding...");
         require('./src/utils/server')(client);
 
         const token = process.env.DISCORD_TOKEN?.trim();
@@ -66,11 +59,13 @@ for (const file of eventFiles) {
             return;
         }
 
-        console.log("[System] Sending request to Discord Headquarters...");
-        await client.login(token);
-        console.log("[System] Koharu has been granted entry!");
+        console.log("[System] Connecting to Discord...");
+        // Non-blocking login for Render stability
+        client.login(token).catch(err => {
+            console.error("[CRITICAL] Login Handshake Failed:", err.message);
+        });
 
     } catch (err) {
-        console.error('[CRITICAL ERROR] Startup failure:', err.message);
+        console.error('[CRITICAL ERROR] Boot sequence failed:', err.message);
     }
 })();
