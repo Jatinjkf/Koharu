@@ -3,9 +3,9 @@ const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./src/utils/db');
-const keepAlive = require('./src/utils/server');
 
-// Initialize Koharu
+console.log("[System] Koharu is waking up...");
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -17,26 +17,20 @@ const client = new Client({
 
 client.commands = new Collection();
 
-// Load Commands
+// 1. Load Commands
 const commandsPath = path.join(__dirname, 'src', 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
-    } else {
-        console.log(`[Warning] The command at ${filePath} is missing a required "data" or "execute" property.`);
     }
 }
 
-// Load Events (if we split them later, for now we can keep basic ones here or move them)
-// For modularity, let's keep the main ready/interaction logic here for a moment or move to events folder.
-// Let's use the events folder structure for cleanliness.
+// 2. Load Events
 const eventsPath = path.join(__dirname, 'src', 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
     const event = require(filePath);
@@ -49,31 +43,25 @@ for (const file of eventFiles) {
 
 // Start Systems
 (async () => {
-    if (process.env.USE_LOCAL_DB === 'true') {
-        console.warn('\x1b[33m%s\x1b[0m', '⚠️  WARNING: Running with In-Memory Database. All data will be LOST when you stop this bot. ⚠️');
-    }
-
-    // 1. Connect Database
-    await connectDB();
-
-    // 2. Start Web Server IMMEDIATELY (For Render Port Binding)
-    require('./src/utils/server')(client);
-
-    // 3. Start Scheduler
-    const scheduler = require('./src/utils/scheduler');
-    scheduler.start(client);
-
-    // 4. Login to Discord
     try {
-        await client.login(process.env.DISCORD_TOKEN);
-        
-        // Run "Wake Up" check after login
-        setTimeout(() => {
-            scheduler.checkNow(client);
-        }, 5000); 
+        // Connect Database
+        await connectDB();
+
+        // Start Web Server (For Render Port Binding)
+        require('./src/utils/server')(client);
+
+        // Login
+        const token = process.env.DISCORD_TOKEN?.trim();
+        if (!token) {
+            console.error("[CRITICAL] DISCORD_TOKEN is missing!");
+            return;
+        }
+
+        console.log("[System] Connecting to Discord...");
+        await client.login(token);
+        console.log("[System] Login signal sent.");
 
     } catch (err) {
-        console.error('[System] Failed to login to Discord:', err.message);
+        console.error('[CRITICAL ERROR] Startup failed:', err);
     }
 })();
-
