@@ -53,21 +53,21 @@ for (const file of eventFiles) {
         console.warn('\x1b[33m%s\x1b[0m', '⚠️  WARNING: Running with In-Memory Database. All data will be LOST when you stop this bot. ⚠️');
     }
 
-    // Connect Database First
+    // 1. Connect Database
     await connectDB();
 
-    // Start Scheduler & Run Initial Check
+    // 2. Start Web Server IMMEDIATELY (For Render Port Binding)
+    require('./src/utils/server')(client);
+
+    // 3. Start Scheduler
     const scheduler = require('./src/utils/scheduler');
     scheduler.start(client);
 
-    // Login
+    // 4. Login to Discord
     try {
         await client.login(process.env.DISCORD_TOKEN);
         
-        // Start Web Server (Admin Panel)
-        require('./src/utils/server')(client);
-
-        // Run "Wake Up" check immediately upon connection
+        // Run "Wake Up" check after login
         setTimeout(() => {
             scheduler.checkNow(client);
         }, 5000); 
@@ -76,3 +76,4 @@ for (const file of eventFiles) {
         console.error('[System] Failed to login to Discord:', err.message);
     }
 })();
+
