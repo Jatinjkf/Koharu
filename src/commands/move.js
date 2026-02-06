@@ -1,6 +1,9 @@
 const { SlashCommandBuilder } = require('discord.js');
 const Item = require('../models/Item');
 const Frequency = require('../models/Frequency');
+const ai = require('../utils/ai');
+const Config = require('../models/Config');
+const UserConfig = require('../models/UserConfig');
 const { updateDashboard } = require('../utils/dashboardHelper');
 const { getMidnightIST } = require('../utils/timeHelper');
 
@@ -73,7 +76,14 @@ module.exports = {
         item.awaitingReview = false; 
         
         await item.save();
+
+        const config = await Config.findOne({ guildId });
+        const botName = config ? config.botName : 'Koharu';
+        const userConfig = await UserConfig.findOne({ userId: interaction.user.id, guildId });
+        const masterName = userConfig ? userConfig.preferredName : 'Master';
+
         await updateDashboard(interaction.client, guildId, interaction.user.id);
-        await interaction.editReply({ content: `As you wish. I have moved "**${item.name}**" to the **${freqName}** schedule.` });
+        const msg = await ai.getMoveMessage(item.name, freqName, masterName, botName);
+        await interaction.editReply({ content: msg });
     }
 };

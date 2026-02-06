@@ -1,5 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Item = require('../models/Item');
+const ai = require('../utils/ai');
+const Config = require('../models/Config');
+const UserConfig = require('../models/UserConfig');
 const { updateDashboard, getFreshImageUrl } = require('../utils/dashboardHelper');
 const { getMidnightIST } = require('../utils/timeHelper');
 
@@ -54,8 +57,14 @@ module.exports = {
             item.activeSeq = lastActive ? lastActive.activeSeq + 1 : 1;
             await item.save();
 
+            const config = await Config.findOne({ guildId });
+            const botName = config ? config.botName : 'Koharu';
+            const userConfig = await UserConfig.findOne({ userId, guildId });
+            const masterName = userConfig ? userConfig.preferredName : 'Master';
+
             await updateDashboard(interaction.client, guildId, userId);
-            await interaction.editReply({ content: `✅ Restored "**${item.name}**" to Dashboard (#${item.activeSeq}).` });
+            const msg = await ai.getReviveMessage(item.name, masterName, botName);
+            await interaction.editReply({ content: msg });
         }
 
         if (sub === 'send-all') {

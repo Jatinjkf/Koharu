@@ -5,6 +5,9 @@ const FALLBACKS = {
     praise: (item, name) => `Incredible work, ${name}! You have mastered "**${item}**". Your dedication fills me with pride... ✨🎀`,
     dashboard: (name) => `Welcome back, ${name}. I have tidied your learning schedule and await your commands... 🏰📜`,
     archive: (item, name) => `As you wish, ${name}. I have carefully preserved "**${item}**" in the Royal Archives... 📦🎀`,
+    rename: (oldName, newName, name, loc) => `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.`,
+    move: (item, freq, name) => `As you wish. I have moved "**${item}**" to the **${freq}** schedule.`,
+    revive: (item, name) => `✅ Restored "**${item}**" to Dashboard.`,
     status: [
         "Dusting the Royal Archives 🧹",
         "Preparing Master's tea 🍵",
@@ -125,6 +128,21 @@ class KoharuAI {
     async getArchiveMessage(itemName, userName, botName) {
         const text = await this.generate(`Task: Confirm that "${itemName}" has been archived.`, userName, botName);
         return text || FALLBACKS.archive(itemName, userName);
+    }
+
+    async getRenameMessage(oldName, newName, loc, userName, botName) {
+        const text = await this.generate(`Task: Confirm that "${oldName}" has been renamed to "${newName}" (${loc}).`, userName, botName);
+        return text || FALLBACKS.rename(oldName, newName, userName, loc);
+    }
+
+    async getMoveMessage(itemName, freqName, userName, botName) {
+        const text = await this.generate(`Task: Confirm that "${itemName}" is now on the "${freqName}" schedule.`, userName, botName);
+        return text || FALLBACKS.move(itemName, freqName, userName);
+    }
+
+    async getReviveMessage(itemName, userName, botName) {
+        const text = await this.generate(`Task: Confirm that "${itemName}" has been restored from the archive.`, userName, botName);
+        return text || FALLBACKS.revive(itemName, userName);
     }
 
     async getStatusMessage(botName = 'Koharu') {
