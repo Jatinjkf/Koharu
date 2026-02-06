@@ -29,13 +29,13 @@ async function getFreshImageUrl(client, item) {
     }
 }
 
-async function generateDashboardEmbed(client, userId) {
-    const items = await Item.find({ userId, isArchived: false }).sort({ activeSeq: 1 });
-    const userConfig = await UserConfig.findOne({ userId });
+async function generateDashboardEmbed(client, guildId, userId) {
+    const items = await Item.find({ userId, guildId, isArchived: false }).sort({ activeSeq: 1 });
+    const userConfig = await UserConfig.findOne({ userId, guildId });
     const displayName = userConfig ? userConfig.preferredName : 'Master';
 
     const Config = require('../models/Config');
-    const guildConfig = await Config.findOne(); 
+    const guildConfig = await Config.findOne({ guildId }); 
     const botName = guildConfig ? guildConfig.botName : 'Koharu';
 
     const greeting = await ai.getDashboardIntro(displayName, botName);
@@ -73,8 +73,8 @@ async function generateDashboardEmbed(client, userId) {
 
 async function updateDashboard(client, guildId, userId) {
     try {
-        let userConfig = await UserConfig.findOne({ userId });
-        if (!userConfig) userConfig = await UserConfig.create({ userId });
+        let userConfig = await UserConfig.findOne({ userId, guildId });
+        if (!userConfig) userConfig = await UserConfig.create({ userId, guildId });
 
         const Config = require('../models/Config');
         const config = await Config.findOne({ guildId });
@@ -83,7 +83,7 @@ async function updateDashboard(client, guildId, userId) {
         const channel = client.channels.cache.get(config.quickAddChannelId);
         if (!channel) return;
 
-        const embed = await generateDashboardEmbed(client, userId);
+        const embed = await generateDashboardEmbed(client, guildId, userId);
         const channelChanged = userConfig.lastDashboardChannelId !== config.quickAddChannelId;
 
         if (!channelChanged && userConfig.lastDashboardMessageId) {
