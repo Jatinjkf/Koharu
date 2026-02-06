@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const Item = require('../models/Item');
 const Frequency = require('../models/Frequency');
 const Config = require('../models/Config');
+const ai = require('../utils/ai');
 const { updateDashboard } = require('../utils/dashboardHelper');
 const { getMidnightIST } = require('../utils/timeHelper');
 
@@ -102,8 +103,15 @@ module.exports = {
             await item.save();
 
             const loc = item.isArchived ? "in your archives" : "on your dashboard";
+
+            const config = await Config.findOne({ guildId });
+            const botName = config ? config.botName : 'Koharu';
+            const userConfig = await require('../models/UserConfig').findOne({ userId, guildId });
+            const masterName = userConfig ? userConfig.preferredName : 'Master';
+
             await updateDashboard(interaction.client, guildId, userId);
-            await interaction.editReply({ content: `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.` });
+            const msg = await ai.getRenameMessage(oldName, newName, loc, masterName, botName);
+            await interaction.editReply({ content: msg });
         }
 
         if (sub === 'remove' || sub === 'archive') {
