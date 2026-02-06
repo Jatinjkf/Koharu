@@ -58,7 +58,7 @@ module.exports = {
                     completedNames.push(item.name);
                 }
 
-                const userConfig = await UserConfig.findOne({ userId: interaction.user.id });
+                const userConfig = await UserConfig.findOne({ userId: interaction.user.id, guildId: interaction.guild.id });
                 const masterName = userConfig ? userConfig.preferredName : 'Master';
                 const config = await Config.findOne({ guildId: interaction.guild.id });
                 const botName = config ? config.botName : 'Koharu';
