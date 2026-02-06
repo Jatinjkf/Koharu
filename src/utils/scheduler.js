@@ -43,7 +43,7 @@ async function checkRemindersForGuild(client, guildId) {
 
         for (const userId of Object.keys(userItems)) {
             const items = userItems[userId];
-            const userConfig = await UserConfig.findOne({ userId });
+            const userConfig = await UserConfig.findOne({ userId, guildId });
             const masterName = userConfig ? userConfig.preferredName : 'Master';
             const botName = config.botName || 'Koharu';
 
