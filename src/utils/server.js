@@ -12,17 +12,26 @@ module.exports = (client) => {
     app.use(express.json());
     app.use(express.static(path.join(__dirname, '../../public')));
 
+    // --- UPTIME MONITORING ---
+    app.get('/', (req, res) => {
+        res.send("🌸 Koharu is serving her Master. Protocols are active.");
+    });
+
     const gatekeeper = (req, res, next) => {
-        if (req.headers['x-admin-password'] !== (process.env.ADMIN_PASSWORD || 'koharu')) return res.status(403).json({ error: "Denied" });
+        const provided = req.headers['x-admin-password'];
+        const actual = process.env.ADMIN_PASSWORD || 'koharu';
+        if (provided !== actual) return res.status(403).json({ error: "Denied" });
         next();
     };
+
+    // --- API ROUTES ---
 
     app.get('/api/guilds', gatekeeper, (req, res) => {
         res.json(client.guilds.cache.map(g => ({ id: g.id, name: g.name })));
     });
 
     app.get('/api/channels/:guildId', gatekeeper, (req, res) => {
-        const guild = client.guilds.cache.get(req.params.guildId);
+        const guild = client.channels.cache.get(req.params.guildId);
         if (!guild) return res.json([]);
         const channels = guild.channels.cache.filter(c => c.isTextBased()).map(c => ({ id: c.id, name: c.name }));
         res.json(channels);
@@ -52,6 +61,7 @@ module.exports = (client) => {
 
     app.post('/api/frequencies/:guildId', gatekeeper, async (req, res) => {
         const ms = parseDuration(req.body.duration);
+        if (!ms) return res.status(400).json({ error: "Invalid format" });
         await Frequency.create({ guildId: req.params.guildId, name: req.body.name, duration: ms });
         res.json({ success: true });
     });
@@ -75,18 +85,13 @@ module.exports = (client) => {
         res.json({ success: true });
     });
 
-    // UPDATED: Filter Guests by Guild
     app.get('/api/users/:guildId', gatekeeper, async (req, res) => {
         res.json(await UserConfig.find({ guildId: req.params.guildId }));
     });
 
     app.post('/api/users/:guildId', gatekeeper, async (req, res) => {
         const { userId, name } = req.body;
-        await UserConfig.findOneAndUpdate(
-            { userId, guildId: req.params.guildId }, 
-            { preferredName: name }, 
-            { upsert: true }
-        );
+        await UserConfig.findOneAndUpdate({ userId, guildId: req.params.guildId }, { preferredName: name }, { upsert: true });
         res.json({ success: true });
     });
 
