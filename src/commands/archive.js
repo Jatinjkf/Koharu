@@ -40,9 +40,10 @@ module.exports = {
         }
 
         if (sub === 'revive') {
+            await interaction.deferReply({ ephemeral: true });
             const id = interaction.options.getString('item');
             let item = await Item.findById(id) || await Item.findOne({ userId, guildId, archiveSeq: parseInt(id), isArchived: true });
-            if (!item) return interaction.reply({ content: 'I cannot find that archive, Master.', ephemeral: true });
+            if (!item) return interaction.editReply({ content: 'I cannot find that archive, Master.' });
 
             item.isArchived = false;
             item.archiveSeq = null; 
@@ -53,8 +54,8 @@ module.exports = {
             item.activeSeq = lastActive ? lastActive.activeSeq + 1 : 1;
             await item.save();
 
-            await interaction.reply({ content: `✅ Restored "**${item.name}**" to Dashboard (#${item.activeSeq}).`, ephemeral: true });
             await updateDashboard(interaction.client, guildId, userId);
+            await interaction.editReply({ content: `✅ Restored "**${item.name}**" to Dashboard (#${item.activeSeq}).` });
         }
 
         if (sub === 'send-all') {

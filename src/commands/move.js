@@ -43,11 +43,12 @@ module.exports = {
         }
     },
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
         const itemIdOrName = interaction.options.getString('item');
         const freqName = interaction.options.getString('to');
         const guildId = interaction.guild.id;
 
-        if (freqName === "none") return interaction.reply({ content: "Please configure rhythms in the Web Admin Panel first.", ephemeral: true });
+        if (freqName === "none") return interaction.editReply({ content: "Please configure rhythms in the Web Admin Panel first." });
 
         // Find Item
         let item = await Item.findById(itemIdOrName);
@@ -59,11 +60,11 @@ module.exports = {
              }
         }
 
-        if (!item) return interaction.reply({ content: 'I could not find that item in your active list.', ephemeral: true });
+        if (!item) return interaction.editReply({ content: 'I could not find that item in your active list.' });
 
         // Find Frequency
         const frequency = await Frequency.findOne({ guildId, name: freqName });
-        if (!frequency) return interaction.reply({ content: 'I do not know that rhythm. Please select one from the list.', ephemeral: true });
+        if (!frequency) return interaction.editReply({ content: 'I do not know that rhythm. Please select one from the list.' });
 
         // Update
         item.frequencyName = frequency.name;
@@ -72,7 +73,7 @@ module.exports = {
         item.awaitingReview = false; 
         
         await item.save();
-        await interaction.reply({ content: `As you wish. I have moved "**${item.name}**" to the **${freqName}** schedule.`, ephemeral: true });
         await updateDashboard(interaction.client, guildId, interaction.user.id);
+        await interaction.editReply({ content: `As you wish. I have moved "**${item.name}**" to the **${freqName}** schedule.` });
     }
 };
