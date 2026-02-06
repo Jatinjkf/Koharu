@@ -72,8 +72,7 @@ module.exports = {
         item.awaitingReview = false; 
         
         await item.save();
+        await interaction.reply({ content: `As you wish. I have moved "**${item.name}**" to the **${freqName}** schedule.`, ephemeral: true });
         await updateDashboard(interaction.client, guildId, interaction.user.id);
-
-        return interaction.reply({ content: `As you wish. I have moved "**${item.name}**" to the **${freqName}** schedule.`, ephemeral: true });
     }
 };

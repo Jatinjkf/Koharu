@@ -101,8 +101,8 @@ module.exports = {
             await item.save();
 
             const loc = item.isArchived ? "in your archives" : "on your dashboard";
+            await interaction.reply({ content: `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.`, ephemeral: true });
             await updateDashboard(interaction.client, guildId, userId);
-            return interaction.reply({ content: `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.`, ephemeral: true });
         }
 
         if (sub === 'remove' || sub === 'archive') {

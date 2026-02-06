@@ -53,8 +53,8 @@ module.exports = {
             item.activeSeq = lastActive ? lastActive.activeSeq + 1 : 1;
             await item.save();
 
+            await interaction.reply({ content: `✅ Restored "**${item.name}**" to Dashboard (#${item.activeSeq}).`, ephemeral: true });
             await updateDashboard(interaction.client, guildId, userId);
-            return interaction.reply({ content: `✅ Restored "**${item.name}**" to Dashboard (#${item.activeSeq}).`, ephemeral: true });
         }
 
         if (sub === 'send-all') {
