@@ -10,7 +10,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: false });
         
         // Use the updated helper function
-        const embed = await generateDashboardEmbed(interaction.client, interaction.user.id);
+        const embed = await generateDashboardEmbed(interaction.client, interaction.guild.id, interaction.user.id);
         
         await interaction.editReply({ embeds: [embed] });
     }
