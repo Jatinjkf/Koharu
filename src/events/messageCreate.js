@@ -17,7 +17,7 @@ module.exports = {
         const attachments = message.attachments.filter(a => a.contentType?.startsWith('image/'));
         if (attachments.size === 0) return;
 
-        const userConfig = await UserConfig.findOne({ userId: message.author.id });
+        const userConfig = await UserConfig.findOne({ userId: message.author.id, guildId: message.guild.id });
         const masterName = userConfig ? userConfig.preferredName : 'Master';
 
         // 1. DENY MULTI-IMAGE DROPS
