@@ -6,13 +6,13 @@ const UserConfig = require('../models/UserConfig');
 const Item = require('../models/Item');
 const parseDuration = require('./timeParser');
 const scheduler = require('./scheduler');
+const { ChannelType } = require('discord.js');
 
 module.exports = (client) => {
     const app = express();
     app.use(express.json());
     app.use(express.static(path.join(__dirname, '../../public')));
 
-    // --- UPTIME MONITORING ---
     app.get('/', (req, res) => {
         res.send("🌸 Koharu is serving her Master. Protocols are active.");
     });
@@ -24,17 +24,37 @@ module.exports = (client) => {
         next();
     };
 
-    // --- API ROUTES ---
-
     app.get('/api/guilds', gatekeeper, (req, res) => {
         res.json(client.guilds.cache.map(g => ({ id: g.id, name: g.name })));
     });
 
-    app.get('/api/channels/:guildId', gatekeeper, (req, res) => {
-        const guild = client.channels.cache.get(req.params.guildId);
-        if (!guild) return res.json([]);
-        const channels = guild.channels.cache.filter(c => c.isTextBased()).map(c => ({ id: c.id, name: c.name }));
-        res.json(channels);
+    // UPDATED: Aggressive Async Fetch for Channels
+    app.get('/api/channels/:guildId', gatekeeper, async (req, res) => {
+        try {
+            const gid = req.params.guildId;
+            console.log(`[WebUI] Fetching rooms for Mansion: ${gid}`);
+            
+            // Force fetch the guild to ensure it's in memory
+            const guild = await client.guilds.fetch(gid);
+            if (!guild) {
+                console.error("[WebUI] Mansion not found.");
+                return res.json([]);
+            }
+            
+            // Force fetch ALL channels from Discord
+            const channels = await guild.channels.fetch();
+            
+            const textChannels = channels
+                .filter(c => c && (c.type === ChannelType.GuildText))
+                .map(c => ({ id: c.id, name: c.name }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+            
+            console.log(`[WebUI] Found ${textChannels.length} rooms.`);
+            res.json(textChannels);
+        } catch (e) {
+            console.error("[WebUI Error] Deep room fetch failed:", e.message);
+            res.status(500).json({ error: e.message });
+        }
     });
 
     app.get('/api/config/:guildId', gatekeeper, async (req, res) => {
