@@ -1,4 +1,4 @@
-// 1. CLOUD DNS FIX
+// FINAL CLOUD HANDSHAKE PROTOCOL
 const dns = require('node:dns');
 if (dns.setDefaultResultOrder) dns.setDefaultResultOrder('ipv4first');
 
@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const connectDB = require('./src/utils/db');
 
-console.log("[System] Koharu is initiating cloud protocols...");
+console.log("[System] Koharu is initiating the Final Cloud Handshake...");
 
 const client = new Client({
     intents: [
@@ -18,15 +18,16 @@ const client = new Client({
         GatewayIntentBits.DirectMessages
     ],
     partials: [Partials.Channel, Partials.Message, Partials.User],
-    closeTimeout: 30000
+    // WebSocket stability for cloud environments
+    rest: { timeout: 60000 },
+    sweepers: { messages: { interval: 3600, lifetime: 1800 } }
 });
 
-// --- CONNECTION DIAGNOSTICS ---
-client.on('debug', info => {
-    if (info.includes('heartbeat')) return; // Ignore noise
-    console.log('[Discord Debug]', info);
-});
-client.on('error', err => console.error('[Discord Error]', err));
+// --- CRITICAL ERROR LOGGING ---
+client.on('error', err => console.error('[Gateway Error]', err.message));
+client.on('shardError', err => console.error('[Shard Error]', err.message));
+client.on('shardDisconnect', () => console.warn('[Shard] Disconnected...'));
+client.on('shardReconnecting', () => console.info('[Shard] Reconnecting...'));
 
 client.commands = new Collection();
 
@@ -49,7 +50,6 @@ for (const file of eventFiles) {
     else client.on(event.name, (...args) => event.execute(...args));
 }
 
-// 3. Clear Log on Successful Ready
 client.once('ready', () => {
     console.log("-----------------------------------");
     console.log(`🌸 [SUCCESS] ${client.user.tag} IS ONLINE!`);
@@ -59,28 +59,28 @@ client.once('ready', () => {
 // Start Systems
 (async () => {
     try {
-        console.log("[System] Connecting to Memory...");
+        console.log("[System] 1. Connecting to Memory...");
         await connectDB();
 
-        console.log("[System] Starting WebUI...");
+        console.log("[System] 2. Opening Mansion Doors (WebUI)...");
         require('./src/utils/server')(client);
 
         const token = process.env.DISCORD_TOKEN?.trim();
-        if (!token) return console.error("[CRITICAL] DISCORD_TOKEN missing!");
+        if (!token) throw new Error("DISCORD_TOKEN is missing!");
 
-        console.log("[System] Dispatched Handshake Signal...");
+        console.log("[System] 3. Attempting Discord Handshake...");
         
-        // Handshake Watchdog
-        const handshakeWatchdog = setTimeout(() => {
-            console.error("[CRITICAL] Handshake taking too long. Forcing restart...");
-            process.exit(1); 
-        }, 45000); // Give it 45 seconds
+        // Timeout Protection
+        const watchdog = setTimeout(() => {
+            console.error("[CRITICAL] Handshake timeout. Restarting container...");
+            process.exit(1);
+        }, 60000);
 
         await client.login(token);
-        clearTimeout(handshakeWatchdog);
+        clearTimeout(watchdog);
 
     } catch (err) {
-        console.error('[CRITICAL ERROR] Boot sequence failed:', err.message);
+        console.error('[CRITICAL ERROR]', err.message);
         process.exit(1);
     }
 })();
