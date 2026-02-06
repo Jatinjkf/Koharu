@@ -83,6 +83,11 @@
             display: flex; align-items: center; justify-content: center;
             background-image: radial-gradient(circle at center, #2a1a1f 0%, #1a1a1d 80%);
         }
+
+        .btn-sm-action {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -105,10 +110,11 @@
         <div class="header">
             <h1>Koharu's Duty Log</h1>
             <p>Administrative Controls & Master Protocols</p>
-            <div class="d-flex justify-content-center mt-4">
+            <div class="d-flex justify-content-center mt-4 gap-2">
                 <select id="guildSelect" class="form-select w-50" onchange="loadGuildData()">
                     <option value="">Choose a Mansion to manage...</option>
                 </select>
+                <button onclick="checkAuth()" class="btn btn-maid btn-sm-action" title="Refresh Mansions"><i class="fas fa-sync"></i></button>
             </div>
         </div>
 
@@ -128,13 +134,13 @@
                             <input type="text" id="botName" class="form-control mb-4" placeholder="Koharu">
 
                             <label class="form-label">Vault (Storage Channel)</label>
-                            <select id="storageChannel" class="form-select mb-4"></select>
+                            <select id="storageChannel" class="form-select mb-4"><option value="">Select a channel...</option></select>
                             
                             <label class="form-label">Study Hall (Quick Add & Reminders)</label>
-                            <select id="quickAddChannel" class="form-select mb-4"></select>
+                            <select id="quickAddChannel" class="form-select mb-4"><option value="">Select a channel...</option></select>
                             
                             <label class="form-label">Daily Wake-Up Hour (0-23 IST)</label>
-                            <input type="number" id="reminderHour" class="form-control mb-4" placeholder="e.g. 0 for Midnight">
+                            <input type="number" id="reminderHour" class="form-control mb-4" placeholder="e.g. 0 for Midnight" min="0" max="23">
                             
                             <button onclick="saveSettings()" class="btn btn-maid w-100">Update Mansion Protocols</button>
                         </div>
@@ -149,7 +155,7 @@
                             <div class="maid-manual">
                                 "How often shall I present your materials? Use special codes: <b>1d</b> for Daily, <b>1w</b> for Weekly, or <b>12h</b> for focus. Once marked <b>'Done'</b>, I reset the clock to Midnight."
                             </div>
-                            <div id="freqList" class="mb-4"></div>
+                            <div id="freqList" class="mb-4" style="max-height: 300px; overflow-y: auto;"></div>
                             <button onclick="restoreDefaults()" class="btn btn-outline-maid w-100 mb-4">✨ Restore Standard Rhythms</button>
                             
                             <div class="row g-2">
@@ -169,11 +175,19 @@
                             <div class="maid-manual">
                                 "I take great pride in addressing my Masters properly. Please register their Discord IDs here. I shall interpret their names and apply <b>utmost respect</b>."
                             </div>
-                            <div id="userList" class="mb-4"></div>
+                            <div id="userList" class="mb-4" style="max-height: 300px; overflow-y: auto;"></div>
                             <div class="row g-3 border-top border-secondary pt-4">
-                                <div class="col-md-4"><label class="form-label">Discord Identity (ID)</label><input type="text" id="uid" class="form-control" placeholder="Right-click user -> Copy ID"></div>
-                                <div class="col-md-5"><label class="form-label">Master's Proper Name</label><input type="text" id="un" class="form-control" placeholder="e.g. Jatin"></div>
-                                <div class="col-md-3 d-flex align-items-end"><button onclick="updateUser()" class="btn btn-maid w-100">Memorize Master</button></div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Discord Identity (ID)</label>
+                                    <input type="text" id="uid" class="form-control" placeholder="Right-click user -> Copy ID">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">Master's Proper Name</label>
+                                    <input type="text" id="un" class="form-control" placeholder="e.g. Jatin">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button onclick="updateUser()" class="btn btn-maid w-100">Memorize Master</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -185,72 +199,206 @@
 
     <script>
         const API = '/api';
-        const getH = () => ({'x-admin-password': document.getElementById('adminPass').value});
+        const getHeaders = () => ({
+            'x-admin-password': document.getElementById('adminPass').value,
+            'Content-Type': 'application/json'
+        });
 
         async function checkAuth() {
-            const res = await fetch(`${API}/guilds`, { headers: getH() });
-            if (res.status === 403) return alert("Forbidden. The key is incorrect.");
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('main-ui').style.display = 'block';
-            const guilds = await res.json();
-            document.getElementById('guildSelect').innerHTML = '<option value="">Choose a Mansion to manage...</option>' + guilds.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            try {
+                const res = await fetch(`${API}/guilds`, { headers: getHeaders() });
+                if (res.status === 403) return alert("Forbidden. The key is incorrect, Master.");
+                
+                const guilds = await res.json();
+                const select = document.getElementById('guildSelect');
+                const currentVal = select.value;
+                
+                select.innerHTML = '<option value="">Choose a Mansion to manage...</option>' + 
+                    guilds.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                
+                if (currentVal) select.value = currentVal;
+
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-ui').style.display = 'block';
+            } catch (e) {
+                alert("Connection failed. Is the bot awake?");
+            }
         }
 
         async function loadGuildData() {
             const gid = document.getElementById('guildSelect').value;
             const area = document.getElementById('controls-area');
-            if(!gid) { area.style.opacity = '0.2'; area.style.pointerEvents = 'none'; return; }
-            area.style.opacity = '1'; area.style.pointerEvents = 'all';
+            if(!gid) { 
+                area.style.opacity = '0.2'; 
+                area.style.pointerEvents = 'none'; 
+                return; 
+            }
+            area.style.opacity = '1'; 
+            area.style.pointerEvents = 'all';
 
-            const h = getH();
-            const channels = await (await fetch(`${API}/channels/${gid}`, { headers: h })).json();
-            const cOpts = channels.map(c => `<option value="${c.id}"># ${c.name}</option>`).join('');
-            document.getElementById('storageChannel').innerHTML = cOpts;
-            document.getElementById('quickAddChannel').innerHTML = cOpts;
+            const h = getHeaders();
+            try {
+                // Load Channels
+                const channelsRes = await fetch(`${API}/channels/${gid}`, { headers: h });
+                const channels = await channelsRes.json();
+                const cOpts = '<option value="">Select a channel...</option>' + 
+                    channels.map(c => `<option value="${c.id}"># ${c.name}</option>`).join('');
+                document.getElementById('storageChannel').innerHTML = cOpts;
+                document.getElementById('quickAddChannel').innerHTML = cOpts;
 
-            const conf = await (await fetch(`${API}/config/${gid}`, { headers: h })).json();
-            document.getElementById('botName').value = conf.botName || 'Koharu';
-            document.getElementById('storageChannel').value = conf.storageChannelId || '';
-            document.getElementById('quickAddChannel').value = conf.quickAddChannelId || '';
-            document.getElementById('reminderHour').value = conf.reminderTime ? conf.reminderTime.split(' ')[1] : 0;
+                // Load Config
+                const confRes = await fetch(`${API}/config/${gid}`, { headers: h });
+                const conf = await confRes.json();
+                
+                document.getElementById('botName').value = conf.botName || 'Koharu';
+                document.getElementById('storageChannel').value = conf.storageChannelId || '';
+                document.getElementById('quickAddChannel').value = conf.quickAddChannelId || '';
+                
+                if (conf.reminderTime) {
+                    const parts = conf.reminderTime.split(' ');
+                    document.getElementById('reminderHour').value = parts[1] || 0;
+                } else {
+                    document.getElementById('reminderHour').value = 0;
+                }
 
-            loadFreqs(); loadUsers();
+                loadFreqs(); 
+                loadUsers();
+            } catch (e) {
+                console.error("Error loading mansion data:", e);
+            }
         }
 
         async function loadFreqs() {
             const gid = document.getElementById('guildSelect').value;
-            const res = await fetch(`${API}/frequencies/${gid}`, { headers: getH() });
-            const data = await res.json();
-            document.getElementById('freqList').innerHTML = data.map(f => `<div class="freq-item"><span><b>${f.name}</b> <small class="text-muted">(${f.duration/3600000}h cycle)</small></span><button onclick="delF('${f._id}')" class="btn text-danger btn-sm"><i class="fas fa-times"></i></button></div>`).join('');
+            if (!gid) return;
+            try {
+                const res = await fetch(`${API}/frequencies/${gid}`, { headers: getHeaders() });
+                const data = await res.json();
+                const list = document.getElementById('freqList');
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-3 small">No rhythms recorded.</div>';
+                } else {
+                    list.innerHTML = data.map(f => `
+                        <div class="freq-item">
+                            <span><b>${f.name}</b> <small class="text-muted">(${(f.duration/3600000).toFixed(1)}h cycle)</small></span>
+                            <button onclick="delF('${f._id}')" class="btn text-danger btn-sm"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error(e); }
         }
 
         async function loadUsers() {
             const gid = document.getElementById('guildSelect').value;
-            const res = await fetch(`${API}/users/${gid}`, { headers: getH() });
-            const data = await res.json();
-            document.getElementById('userList').innerHTML = data.map(u => `<div class="freq-item"><span>${u.preferredName} <small class="text-muted">(${u.userId})</small></span><button onclick="editU('${u.userId}','${u.preferredName}')" class="btn btn-outline-info btn-sm">Edit</button></div>`).join('');
+            if (!gid) return;
+            try {
+                const res = await fetch(`${API}/users/${gid}`, { headers: getHeaders() });
+                const data = await res.json();
+                const list = document.getElementById('userList');
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-3 small">No masters registered.</div>';
+                } else {
+                    list.innerHTML = data.map(u => `
+                        <div class="freq-item">
+                            <span><b>${u.preferredName}</b> <small class="text-muted">(${u.userId})</small></span>
+                            <button onclick="editU('${u.userId}','${u.preferredName}')" class="btn btn-outline-info btn-sm">Edit</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error(e); }
         }
 
-        function editU(id, name) { document.getElementById('uid').value = id; document.getElementById('un').value = name; }
+        function editU(id, name) { 
+            document.getElementById('uid').value = id; 
+            document.getElementById('un').value = name; 
+            document.getElementById('un').focus();
+        }
 
         async function saveSettings() {
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/config/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ storageChannelId: document.getElementById('storageChannel').value, quickAddChannelId: document.getElementById('quickAddChannel').value, reminderHour: document.getElementById('reminderHour').value, botName: document.getElementById('botName').value }) });
-            alert("The mansion protocols have been updated, Master.");
+            if (!gid) return;
+            const data = { 
+                storageChannelId: document.getElementById('storageChannel').value, 
+                quickAddChannelId: document.getElementById('quickAddChannel').value, 
+                reminderHour: document.getElementById('reminderHour').value, 
+                botName: document.getElementById('botName').value 
+            };
+            try {
+                const res = await fetch(`${API}/config/${gid}`, { 
+                    method: 'POST', 
+                    headers: getHeaders(), 
+                    body: JSON.stringify(data) 
+                });
+                if (res.ok) alert("The mansion protocols have been updated, Master.");
+                else alert("An error occurred while updating protocols.");
+            } catch (e) { alert("Failed to save. Is the bot awake?"); }
         }
 
         async function addFreq() {
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/frequencies/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ name: document.getElementById('fn').value, duration: document.getElementById('ft').value }) });
-            loadFreqs();
+            if (!gid) return;
+            const name = document.getElementById('fn').value;
+            const duration = document.getElementById('ft').value;
+            if (!name || !duration) return alert("Please fill both fields, Master.");
+            
+            try {
+                const res = await fetch(`${API}/frequencies/${gid}`, { 
+                    method: 'POST', 
+                    headers: getHeaders(), 
+                    body: JSON.stringify({ name, duration }) 
+                });
+                if (res.ok) {
+                    document.getElementById('fn').value = ''; 
+                    document.getElementById('ft').value = ''; 
+                    loadFreqs();
+                } else {
+                    const err = await res.json();
+                    alert(err.error || "Failed to add rhythm.");
+                }
+            } catch (e) { alert("Error adding rhythm."); }
         }
 
-        async function delF(id) { const res = await fetch(`${API}/frequencies/${id}`, { method: 'DELETE', headers: getH() }); if(res.status===400) alert((await res.json()).error); loadFreqs(); }
-        async function restoreDefaults() { const gid = document.getElementById('guildSelect').value; await fetch(`${API}/frequencies/defaults/${gid}`, { method: 'POST', headers: getH() }); loadFreqs(); }
+        async function delF(id) { 
+            if (!confirm("Shall I remove this rhythm from my memory, Master?")) return;
+            try {
+                const res = await fetch(`${API}/frequencies/${id}`, { method: 'DELETE', headers: getHeaders() }); 
+                if (res.status === 400) {
+                    const err = await res.json();
+                    alert(err.error);
+                } else {
+                    loadFreqs(); 
+                }
+            } catch (e) { alert("Error deleting rhythm."); }
+        }
+
+        async function restoreDefaults() {
+            const gid = document.getElementById('guildSelect').value;
+            if (!gid) return;
+            try {
+                const res = await fetch(`${API}/frequencies/defaults/${gid}`, { method: 'POST', headers: getHeaders() });
+                if (res.ok) loadFreqs();
+            } catch (e) { alert("Error restoring defaults."); }
+        }
+
         async function updateUser() { 
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/users/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ userId: document.getElementById('uid').value, name: document.getElementById('un').value }) }); 
-            loadUsers(); 
+            if (!gid) return;
+            const userId = document.getElementById('uid').value;
+            const name = document.getElementById('un').value;
+            if (!userId || !name) return alert("Please provide both ID and Name, Master.");
+
+            try {
+                const res = await fetch(`${API}/users/${gid}`, { 
+                    method: 'POST', 
+                    headers: getHeaders(), 
+                    body: JSON.stringify({ userId, name }) 
+                }); 
+                if (res.ok) {
+                    document.getElementById('uid').value = ''; 
+                    document.getElementById('un').value = ''; 
+                    loadUsers(); 
+                }
+            } catch (e) { alert("Error registering master."); }
         }
     </script>
 </body>
