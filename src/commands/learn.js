@@ -89,12 +89,13 @@ module.exports = {
         }
 
         if (sub === 'rename') {
+            await interaction.deferReply({ ephemeral: true });
             const itemIdOrName = interaction.options.getString('item');
             const newName = interaction.options.getString('new_name');
             
             let item = await Item.findById(itemIdOrName) || await Item.findOne({ userId, guildId, activeSeq: parseInt(itemIdOrName), isArchived: false }) || await Item.findOne({ userId, guildId, archiveSeq: parseInt(itemIdOrName), isArchived: true }) || await Item.findOne({ userId, guildId, name: itemIdOrName });
 
-            if (!item) return interaction.reply({ content: 'I could not find that item.', ephemeral: true });
+            if (!item) return interaction.editReply({ content: 'I could not find that item.' });
             
             const oldName = item.name;
             item.name = newName;
@@ -102,7 +103,7 @@ module.exports = {
 
             const loc = item.isArchived ? "in your archives" : "on your dashboard";
             await updateDashboard(interaction.client, guildId, userId);
-            return interaction.reply({ content: `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.`, ephemeral: true });
+            await interaction.editReply({ content: `📝 Renamed "**${oldName}**" to "**${newName}**" ${loc}.` });
         }
 
         if (sub === 'remove' || sub === 'archive') {
