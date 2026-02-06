@@ -7,136 +7,70 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #1a1a1d;
-            --card-bg: #252529;
-            --input-bg: #2f2f33;
-            --accent: #ffb6c1; /* Sakura Pink */
-            --text-main: #e0e0e0;
-            --text-bright: #ffffff;
-        }
-
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            font-family: 'Lato', sans-serif;
-            background-image: radial-gradient(circle at top right, #2a1a1f 0%, transparent 40%);
-            padding-bottom: 80px;
-        }
-
+        :root { --bg: #1a1a1d; --card: #252529; --input: #2f2f33; --accent: #ffb6c1; --text: #e0e0e0; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Lato', sans-serif; background-image: radial-gradient(circle at top right, #2a1a1f 0%, transparent 40%); padding-bottom: 50px; }
         h1, h2, h3, .card-header { font-family: 'Playfair Display', serif; }
-
-        .card { 
-            background-color: var(--card-bg); border: none; border-top: 4px solid var(--accent); 
-            box-shadow: 0 15px 50px rgba(0,0,0,0.5); margin-bottom: 40px; 
-        }
-        .card-header { 
-            background: rgba(255,255,255,0.02); color: var(--accent); font-size: 1.5rem; padding: 25px; 
-        }
-
-        /* Inputs - FORCED VISIBILITY */
-        .form-label { color: var(--accent); font-weight: bold; margin-bottom: 8px; font-size: 0.9rem; }
-        .form-control, .form-select {
-            background-color: #121212 !important; /* Very dark background */
-            border: 1px solid #ffb6c1 !important; /* Pink border for visibility */
-            color: #ffffff !important; /* Pure white text */
-            padding: 12px; font-size: 1rem;
-        }
-        .form-select option { background-color: #1a1a1d; color: #fff; }
-
-        /* Buttons - FORCED VISIBILITY */
-        .btn-maid {
-            background-color: #ffb6c1 !important;
-            color: #000000 !important;
-            font-weight: 800 !important;
-            border: 2px solid #ffffff !important;
-            padding: 12px 25px; transition: all 0.2s;
-        }
-        .btn-maid:hover { background-color: #ffffff !important; transform: scale(1.02); }
-
-        .freq-item {
-            background-color: #121212; border: 1px solid #444; padding: 15px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center; border-radius: 4px;
-        }
-
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1a1a1d; z-index: 10000;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .card { background-color: var(--card); border: none; border-top: 3px solid var(--accent); border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); margin-bottom: 30px; }
+        .card-header { color: var(--accent); font-size: 1.4rem; padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .form-control, .form-select { background-color: var(--input) !important; border: 1px solid #444 !important; color: #fff !important; padding: 12px; }
+        .btn-maid { background-color: var(--accent); color: #1a1a1d; font-weight: bold; border: none; padding: 12px 25px; border-radius: 2px; }
+        .btn-maid:hover { background-color: #fff; transform: translateY(-2px); }
+        .btn-rhythm { background-color: #3a3a40; color: var(--accent); border: 1px dashed var(--accent); width: 100%; padding: 10px; margin-bottom: 20px; font-weight: bold; }
+        .btn-rhythm:hover { background-color: var(--accent); color: #000; border-style: solid; }
+        .freq-item { background: var(--input); padding: 12px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 2px; border-left: 3px solid #444; }
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body>
+<body class="container">
 
     <div id="login-overlay">
         <div class="text-center" style="width: 350px;">
-            <h1 style="color:var(--accent); font-style: italic;">Koharu</h1>
-            <input type="password" id="adminPass" class="form-control text-center my-4" placeholder="PROTOCOL KEY">
+            <h1 style="color:var(--accent); font-family: 'Playfair Display'; font-style: italic;" class="mb-5">Koharu</h1>
+            <input type="password" id="adminPass" class="form-control text-center mb-4" placeholder="Protocol Key">
             <button onclick="checkAuth()" class="btn btn-maid w-100">Unlock Journal</button>
         </div>
     </div>
 
-    <div class="container" id="main-ui" style="display:none;">
+    <div id="main-ui" style="display:none;">
         <div class="text-center py-5">
-            <h1 style="color:var(--accent); font-style: italic;">Koharu's Duty Log</h1>
-            <div class="d-flex justify-content-center mt-4 gap-2">
-                <select id="guildSelect" class="form-select w-50" onchange="loadGuildData()">
-                    <option value="">Choose a Mansion (Server)...</option>
-                </select>
-                <button onclick="checkAuth()" class="btn btn-maid" style="padding: 5px 15px;"><i class="fas fa-sync"></i></button>
+            <h1 style="color:var(--accent); font-style: italic;">Duty Log</h1>
+            <div class="d-flex justify-content-center mt-4">
+                <select id="guildSelect" class="form-select w-50" onchange="loadGuildData()"><option value="">Choose a Mansion...</option></select>
             </div>
         </div>
 
         <div id="controls-area" style="opacity: 0.3; pointer-events: none;">
             <div class="row">
-                <!-- PROTOCOLS -->
-                <div class="col-lg-6">
+                <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header">📍 Mansion Protocols</div>
+                        <div class="card-header">Household Protocols</div>
                         <div class="card-body">
-                            <label class="form-label">Persona Name</label>
-                            <input type="text" id="botName" class="form-control mb-4">
-
-                            <label class="form-label">Storage Room (Private)</label>
-                            <select id="storageChannel" class="form-select mb-4"></select>
-                            
-                            <label class="form-label">Study Hall (Reminders)</label>
-                            <select id="quickAddChannel" class="form-select mb-4"></select>
-                            
-                            <label class="form-label">Daily Wake-Up Hour (0-23 IST)</label>
-                            <input type="number" id="reminderHour" class="form-control mb-4">
-                            
-                            <button onclick="saveSettings()" class="btn btn-maid w-100">Update mansion</button>
+                            <label class="small mb-1 text-muted">Maid Name</label><input type="text" id="botName" class="form-control mb-3">
+                            <label class="small mb-1 text-muted">Storage Room</label><select id="storageChannel" class="form-select mb-3"><option>Fetching...</option></select>
+                            <label class="small mb-1 text-muted">Drawing Room</label><select id="quickAddChannel" class="form-select mb-3"><option>Fetching...</option></select>
+                            <label class="small mb-1 text-muted">Wake Hour (0-23)</label><input type="number" id="reminderHour" class="form-control mb-4">
+                            <button onclick="saveSettings()" class="btn btn-maid w-100">Update Protocol</button>
                         </div>
                     </div>
                 </div>
-
-                <!-- RHYTHMS -->
-                <div class="col-lg-6">
+                <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header">⏳ Learning Rhythms</div>
+                        <div class="card-header">Learning Rhythms</div>
                         <div class="card-body">
                             <div id="freqList" class="mb-4"></div>
-                            <button onclick="restoreDefaults()" class="btn btn-maid btn-sm w-100 mb-4" style="background:#444 !important; color:#fff !important; border:none !important;">✨ Restore Standard Rhythms</button>
-                            
-                            <div class="row g-2">
-                                <div class="col-7"><input type="text" id="fn" class="form-control" placeholder="Name"></div>
-                                <div class="col-3"><input type="text" id="ft" class="form-control" placeholder="1d"></div>
-                                <div class="col-2"><button onclick="addFreq()" class="btn btn-maid w-100"><i class="fas fa-plus"></i></button></div>
-                            </div>
+                            <button onclick="restoreDefaults()" class="btn btn-rhythm">✨ Restore Standard Rhythms</button>
+                            <div class="input-group"><input type="text" id="fn" class="form-control" placeholder="Name"><input type="text" id="ft" class="form-control" placeholder="1d"><button onclick="addFreq()" class="btn btn-maid">Add</button></div>
                         </div>
                     </div>
                 </div>
-
-                <!-- GUESTS -->
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header">👑 Guest Register</div>
+                        <div class="card-header">Guest Register</div>
                         <div class="card-body">
                             <div id="userList" class="mb-4"></div>
                             <div class="row g-3">
-                                <div class="col-md-4"><label class="form-label">Discord ID</label><input type="text" id="uid" class="form-control"></div>
-                                <div class="col-md-6"><label class="form-label">Master's Name</label><input type="text" id="un" class="form-control"></div>
+                                <div class="col-md-4"><label class="small text-muted">User ID</label><input type="text" id="uid" class="form-control"></div>
+                                <div class="col-md-6"><label class="small text-muted">Master Name</label><input type="text" id="un" class="form-control" placeholder="Jatin"></div>
                                 <div class="col-md-2 d-flex align-items-end"><button onclick="updateUser()" class="btn btn-maid w-100">Register</button></div>
                             </div>
                         </div>
@@ -146,20 +80,17 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API = '/api';
-        const getHeaders = () => ({'x-admin-password': document.getElementById('adminPass').value, 'Content-Type': 'application/json'});
+        const getH = () => ({'x-admin-password': document.getElementById('adminPass').value});
 
         async function checkAuth() {
-            try {
-                const res = await fetch(`${API}/guilds`, { headers: getHeaders() });
-                if (res.status === 403) return alert("Incorrect Key!");
-                const guilds = await res.json();
-                document.getElementById('guildSelect').innerHTML = '<option value="">Select Server...</option>' + guilds.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-ui').style.display = 'block';
-            } catch (e) { alert("Bot is not responding."); }
+            const res = await fetch(`${API}/guilds`, { headers: getH() });
+            if (res.status === 403) return alert("Wrong Key!");
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'block';
+            const guilds = await res.json();
+            document.getElementById('guildSelect').innerHTML = '<option value="">Choose a Mansion...</option>' + guilds.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
         }
 
         async function loadGuildData() {
@@ -168,11 +99,14 @@
             document.getElementById('controls-area').style.opacity = '1';
             document.getElementById('controls-area').style.pointerEvents = 'all';
 
-            const h = getHeaders();
+            document.getElementById('storageChannel').innerHTML = '<option>Fetching rooms...</option>';
+            document.getElementById('quickAddChannel').innerHTML = '<option>Fetching rooms...</option>';
+
+            const h = getH();
             const channels = await (await fetch(`${API}/channels/${gid}`, { headers: h })).json();
-            const opts = '<option value="">Select Room...</option>' + channels.map(c => `<option value="${c.id}"># ${c.name}</option>`).join('');
-            document.getElementById('storageChannel').innerHTML = opts;
-            document.getElementById('quickAddChannel').innerHTML = opts;
+            const cOpts = '<option value="">Select Room...</option>' + channels.map(c => `<option value="${c.id}"># ${c.name}</option>`).join('');
+            document.getElementById('storageChannel').innerHTML = cOpts;
+            document.getElementById('quickAddChannel').innerHTML = cOpts;
 
             const conf = await (await fetch(`${API}/config/${gid}`, { headers: h })).json();
             document.getElementById('botName').value = conf.botName || 'Koharu';
@@ -185,37 +119,37 @@
 
         async function loadFreqs() {
             const gid = document.getElementById('guildSelect').value;
-            const res = await fetch(`${API}/frequencies/${gid}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/frequencies/${gid}`, { headers: getH() });
             const data = await res.json();
-            document.getElementById('freqList').innerHTML = data.map(f => `<div class="freq-item"><span><b>${f.name}</b> (${(f.duration/3600000).toFixed(0)}h)</span><button onclick="delF('${f._id}')" class="btn text-danger btn-sm"><i class="fas fa-trash"></i></button></div>`).join('');
+            document.getElementById('freqList').innerHTML = data.map(f => `<div class="freq-item"><span><b>${f.name}</b> (${f.duration/3600000}h)</span><button onclick="delF('${f._id}')" class="btn text-danger btn-sm">x</button></div>`).join('');
         }
 
         async function loadUsers() {
             const gid = document.getElementById('guildSelect').value;
-            const res = await fetch(`${API}/users/${gid}`, { headers: getHeaders() });
+            const res = await fetch(`${API}/users/${gid}`, { headers: getH() });
             const data = await res.json();
-            document.getElementById('userList').innerHTML = data.map(u => `<div class="freq-item"><span>${u.preferredName} (${u.userId})</span><button onclick="editU('${u.userId}','${u.preferredName}')" class="btn btn-outline-info btn-sm">Edit</button></div>`).join('');
+            document.getElementById('userList').innerHTML = data.map(u => `<div class="freq-item"><span>${u.preferredName} <small class="text-muted">(${u.userId})</small></span><button onclick="editU('${u.userId}','${u.preferredName}')" class="btn btn-outline-info btn-sm">Edit</button></div>`).join('');
         }
 
         function editU(id, name) { document.getElementById('uid').value = id; document.getElementById('un').value = name; }
 
         async function saveSettings() {
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/config/${gid}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ storageChannelId: document.getElementById('storageChannel').value, quickAddChannelId: document.getElementById('quickAddChannel').value, reminderHour: document.getElementById('reminderHour').value, botName: document.getElementById('botName').value }) });
-            alert("Mansion updated!");
+            await fetch(`${API}/config/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ storageChannelId: document.getElementById('storageChannel').value, quickAddChannelId: document.getElementById('quickAddChannel').value, reminderHour: document.getElementById('reminderHour').value, botName: document.getElementById('botName').value }) });
+            alert("Done");
         }
 
         async function addFreq() {
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/frequencies/${gid}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ name: document.getElementById('fn').value, duration: document.getElementById('ft').value }) });
-            document.getElementById('fn').value = ''; document.getElementById('ft').value = ''; loadFreqs();
+            await fetch(`${API}/frequencies/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ name: document.getElementById('fn').value, duration: document.getElementById('ft').value }) });
+            loadFreqs();
         }
 
-        async function delF(id) { await fetch(`${API}/frequencies/${id}`, { method: 'DELETE', headers: getHeaders() }); loadFreqs(); }
-        async function restoreDefaults() { const gid = document.getElementById('guildSelect').value; await fetch(`${API}/frequencies/defaults/${gid}`, { method: 'POST', headers: getHeaders() }); loadFreqs(); }
+        async function delF(id) { const res = await fetch(`${API}/frequencies/${id}`, { method: 'DELETE', headers: getH() }); if(res.status===400) alert((await res.json()).error); loadFreqs(); }
+        async function restoreDefaults() { const gid = document.getElementById('guildSelect').value; await fetch(`${API}/frequencies/defaults/${gid}`, { method: 'POST', headers: getH() }); loadFreqs(); }
         async function updateUser() { 
             const gid = document.getElementById('guildSelect').value;
-            await fetch(`${API}/users/${gid}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ userId: document.getElementById('uid').value, name: document.getElementById('un').value }) }); 
+            await fetch(`${API}/users/${gid}`, { method: 'POST', headers: {...getH(), 'Content-Type': 'application/json'}, body: JSON.stringify({ userId: document.getElementById('uid').value, name: document.getElementById('un').value }) }); 
             loadUsers(); 
         }
     </script>
